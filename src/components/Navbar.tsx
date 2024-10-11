@@ -34,7 +34,7 @@ export const Navbar  = async() => {
                      
                   })}>Dashboard ✨
                   </Link>):null}
-                  <Link href='/configue/upload' className={buttonVariants({
+                  <Link href='/configure/upload' className={buttonVariants({
                       size: 'sm',
                       className: 'hidden sm:flex items-center gap-1'
 
@@ -60,7 +60,7 @@ export const Navbar  = async() => {
                    
                   </Link>
                   <div  className="h-8 w-px bg-zinc-200 hidden sm:block "/>
-                  <Link href='/configue/upload' className={buttonVariants({
+                  <Link href='/configure/upload' className={buttonVariants({
                       size: 'sm',
                       className: 'hidden sm:flex items-center gap-1'
 
