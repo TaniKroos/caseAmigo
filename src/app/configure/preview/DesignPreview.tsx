@@ -2,15 +2,25 @@
 import Confetti from 'react-dom-confetti'
 import { useEffect, useState } from 'react'
 import Phone from '@/components/Phone'
+import LoginModal from '@/components/LoginModel'
 import { Configuration } from '@prisma/client'
 import { COLORS, FINISHES, MODELS } from '@/validators/option-validator'
 import { cn, formatPrice } from '@/lib/utils'
 import { Check, ArrowRight } from 'lucide-react'
 import { BASE_PRICE, PRODUCTS_PRICES } from '@/config/prodcuts'
 import { Button } from '@/components/ui/button'
-
+import { useMutation } from '@tanstack/react-query'
+import { createCheckoutSession } from './actions'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
+import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
 const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
+    const [isLoginModelOpen, setIsLoginModelOpen] = useState<boolean>(false)
+    const router = useRouter();
+    const {toast} = useToast();
     const [showConfetti, setShowConfetti] = useState(false)
+    const {id} = configuration
+    const {user} = useKindeBrowserClient()
     useEffect(() => {
         setShowConfetti(true)
         setTimeout(() => setShowConfetti(false), 5000)  // Change this value to control confetti duration.
@@ -22,7 +32,35 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
     let totapPrice: number = BASE_PRICE
     if (material === 'polycarbonate') totapPrice += PRODUCTS_PRICES.material.polycarbonate
     if (finish === 'textured') totapPrice += PRODUCTS_PRICES.finish.textured
-     
+    const {mutate: createPaymentSession} = useMutation({
+        mutationKey: ['get-checkout-session'],
+        mutationFn: createCheckoutSession,
+        onSuccess: ({url}) =>{
+            if(url){
+                router.push(url)  // Redirect to the checkout page.
+            }else{
+                throw new Error('unable to retriece payment Url')
+            }
+        },
+        onError: () =>{
+            toast({
+                title: 'Something went wrong',
+                description: 'Please try again later',
+                variant: 'destructive'
+            })
+        }
+    })
+    const handleCheckout = () => {
+        if(user){
+            // create a new payment session
+            createCheckoutSession({configId: id})
+        }
+        else{
+            // need to login
+            localStorage.setItem('configId',id)
+            setIsLoginModelOpen(true)
+        }
+    }
     return (
         <>
             <div aria-hidden='true'
@@ -32,6 +70,7 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
                     config={{ elementCount: 200, spread: 90 }}
                 />
             </div>
+            <LoginModal isOpen={isLoginModelOpen} setIsOpen={setIsLoginModelOpen} />
             <div className='mt-20 grid grid-cols-1 text-sm sm:grid-cols-12 sm:grid-rowa-1
             sm:gap-x-6 md:gap-x-8 lg:gap-x-12'>
                 <div className='sm:col-span-4 md:col-span-3 md:row-span-2 md:row-end-2  '>
@@ -101,8 +140,9 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
                         </div>
                         <div className='mt-8 flex justify-end pb-12'>
                             <Button
-                            disabled={true}
-                                isLoading={true}
+                          onClick={() => handleCheckout()}
+                                disabled={false}
+                                isLoading={false}
                                 loadingText='loading'
                                 className='px-4 sm:px-6 lg:px-8'>
                                 Check out <ArrowRight className='h-4 w-4 ml-1.5 inline' />
