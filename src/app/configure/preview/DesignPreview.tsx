@@ -19,7 +19,8 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
     const router = useRouter();
     const {toast} = useToast();
     const [showConfetti, setShowConfetti] = useState(false)
-    const {id} = configuration
+    const id = configuration.id
+    
     const {user} = useKindeBrowserClient()
     useEffect(() => {
         setShowConfetti(true)
@@ -53,10 +54,12 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
     const handleCheckout = () => {
         if(user){
             // create a new payment session
-            createCheckoutSession({configId: id})
+            createPaymentSession({configId: id})
+            console.log(id, 'Handle Checkout Session')
         }
         else{
             // need to login
+            console.log(id,'Handle Checkout')
             localStorage.setItem('configId',id)
             setIsLoginModelOpen(true)
         }

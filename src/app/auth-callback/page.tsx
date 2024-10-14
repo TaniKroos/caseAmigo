@@ -9,27 +9,32 @@ import { Loader2 } from 'lucide-react'
 const Page = () => {
   const [configId, setConfigId] = useState<string | null>(null)
   const router = useRouter()
-
+ 
   useEffect(() => {
-    const configurationId = localStorage.getItem('configurationId')
+    const configurationId = localStorage.getItem('configId')
+ 
     if (configurationId) setConfigId(configurationId)
   }, [])
-
-  const { data } = useQuery({
+  console.log(configId)
+  const { data, isSuccess} = useQuery({
     queryKey: ['auth-callback'],
     queryFn: async () => await getAuthStatus(),
     retry: true,
     retryDelay: 500,
   })
 
-  if (data?.success) {
-    if (configId) {
-      localStorage.removeItem('configurationId')
-      router.push(`/configure/preview?id=${configId}`)
-    } else {
-      router.push('/')
+  useEffect(() => {
+    if (isSuccess && data?.success) {
+      console.log(configId)
+      if (configId) {
+        localStorage.removeItem('configurationId')
+        
+        router.push(`/configure/preview?id=${configId}`)
+      } else {
+        router.push('/')
+      }
     }
-  }
+  }, [isSuccess, data, configId, router])
 
   return (
     <div className='w-full mt-24 flex justify-center'>
