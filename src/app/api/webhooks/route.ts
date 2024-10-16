@@ -3,10 +3,12 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { db } from "@/db";
 import { NextResponse } from "next/server";
-
-export const config = {
-  api: { bodyParser: false }, // Disable body parsing
-};
+import {Resend} from 'resend'
+import OrderReceivedEmail from "@/components/emails/OrderRecievedEmail";
+const resend  =  new Resend(process.env.RESEND_API_KEY)
+// export const config = {
+//   api: { bodyParser: false }, // Disable body parsing
+// };
 
 export async function POST(req: Request) {
   try {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
       const shippingAddress = session.shipping_details?.address;
 
       try {
-        await db.order.update({
+        const updatedOrder = await db.order.update({
           where: { id: orderId, userId: userID },
           data: {
             isPaid: true,
@@ -75,6 +77,25 @@ export async function POST(req: Request) {
             },
           },
         });
+        await resend.emails.send({
+          from: "CaseAmigo <tanishsaini26@gmail.com>",
+          // @ts-ignore
+          to: [event.data.object.customer_details.email],
+          subject: 'Thanks for your order!',
+          react: OrderReceivedEmail({
+            orderId,
+            orderDate: updatedOrder.createdAt.toLocaleDateString(),
+            // @ts-ignore
+            shippingAddress: {
+              name: session.customer_details!.name!,
+              city: shippingAddress!.city!,
+              country: shippingAddress!.country!,
+              postalCode: shippingAddress!.postal_code!,
+              street: shippingAddress!.line1!,
+              state: shippingAddress!.state,
+            },
+          }),
+        })
 
         console.log('Order successfully updated.');
       } catch (dbError) {

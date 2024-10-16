@@ -54,7 +54,7 @@ const PhonePreview = ({
             caseBackgroundColor
           )}
           src={croppedImageUrl}
-        />
+        /> 
       </div>
 
       <div className='relative h-full w-full z-40'>
